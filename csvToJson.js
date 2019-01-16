@@ -1,7 +1,4 @@
-//Developer's name: Caio Pardal
-//ClassApp DevChallenge
-
-//Declaration of Libs and Packages used in this project
+//Libs and Packages used in this project
 
 var fs = require("fs");
 var _ = require('lodash');
@@ -9,10 +6,10 @@ var validator = require('validator');
 const phoneUtil = require('google-libphonenumber').PhoneNumberUtil.getInstance();
 const PHONE_NUMBER_FORMAT = require('google-libphonenumber').PhoneNumberFormat;
 var parse = require('csv-parse');
-// var transform = require('stream-transform');
 
+//Output Array and Header elements array
 var headArray = [];
-var output = [];
+var outputArray = [];
 
 function HeaderVariables(type, tags) {
     this.type = type;
@@ -113,8 +110,6 @@ fs.readFile('input.csv', function (err, data) {
                 // Checks which email inputs are valid
                 for(k=0; k < parsedEmails.length; k++) {
                     if (validator.isEmail(parsedEmails[k].toString()) ) {
-
-                        // If valid:
                         // Searches for a previous email input with same address
                         // If it is found, just adds new tags, if not, adds new Address object to an array
                         var index = addresses.findIndex( function (addr) {
@@ -123,15 +118,24 @@ fs.readFile('input.csv', function (err, data) {
 
                         if (index != -1) {
                             addresses[index].tags.push.apply(addresses[index].tags, headArray[j].tags.slice());
-
                         }
                         else {
                             addresses.push(new Address(headArray[j].type, headArray[j].tags.slice(), parsedEmails[k].toString()));
-
                         }
                     }
                 }
                 break;
+
+                case 'see_all':
+                  see_all_input = parsedUserData[j].toString();
+
+                  if (see_all_input == "" || see_all_input == "0" || see_all_input == "no") {
+                      see_all = false;
+                  }
+                  else {
+                      see_all = true;
+                  }
+                  break;
 
                case 'phone':
 
@@ -142,7 +146,6 @@ fs.readFile('input.csv', function (err, data) {
                 // Attempts to parse input as a phone number, if it fails (error thrown, just skips entry)
                 try {
                     parsedNumber = phoneUtil.parse(phoneNumber, 'BR');
-
                 }
                 catch (phoneErr) {
                     break;
@@ -177,44 +180,33 @@ fs.readFile('input.csv', function (err, data) {
                    invisible = true;
                }
                break;
-
-             case 'see_all':
-               see_all_input = parsedUserData[j].toString();
-
-               if (see_all_input == "" || see_all_input == "0" || see_all_input == "no") {
-                   see_all = false;
-               }
-               else {
-                   see_all = true;
-               }
-               break;
              }
            }
 
         let userID;
         // Searches for previous user data/row input with same 'eid'
-        userID = output.findIndex( function (user) {
+        userID = outputArray.findIndex( function (user) {
             return user.eid == id;
         });
 
         // Case it is found, update addresses, boolean variables and classes
         if (userID != -1) {
             // Extending arrays
-            output[userID].addresses.push.apply(output[userID].addresses, addresses.slice());
-            output[userID].classes.push.apply(output[userID].classes, classes.slice());
+            outputArray[userID].addresses.push.apply(outputArray[userID].addresses, addresses.slice());
+            outputArray[userID].classes.push.apply(outputArray[userID].classes, classes.slice());
 
             // Boolean operations
-            output[userID].invisible = output[userID].invisible || invisible;
-            output[userID].see_all = output[userID].see_all ||see_all;
+            outputArray[userID].invisible = outputArray[userID].invisible || invisible;
+            outputArray[userID].see_all = outputArray[userID].see_all ||see_all;
         }
         // If the eid isn't found, pushes new User object
         else {
-            output.push(new User(name, id, classes.slice(), addresses.slice(), invisible, see_all));
+            outputArray.push(new User(name, id, classes.slice(), addresses.slice(), invisible, see_all));
         }
       }
 
       // Generating JSON file
-      var JSONFile = JSON.stringify(output, null, 2);
+      var JSONFile = JSON.stringify(outputArray, null, 2);
       fs.writeFile('output.json', JSONFile, 'utf8', function(err){
           if(err) {
              console.log("An error occurred during JSON creation!");
